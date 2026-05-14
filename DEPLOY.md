@@ -6,6 +6,7 @@ Go to [github.com/new](https://github.com/new) and create a repository named `su
 
 ## 2. Initialize and Push
 
+
 ```bash
 cd /path/to/personal_website
 git init
