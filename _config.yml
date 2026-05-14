@@ -1,0 +1,24 @@
+title: Himanshu Sah
+description: Software Engineer building high-performance distributed systems and scalable backend platforms.
+url: ""
+baseurl: ""
+permalink: /blog/:title/
+
+markdown: kramdown
+highlighter: rouge
+
+collections:
+  posts:
+    output: true
+
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md

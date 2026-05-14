@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home | Himanshu Sah</title>
+<meta name="description" content="Software Engineer building high-performance distributed systems and scalable backend platforms.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/main.css">
+
+</head>
+<body>
+  <header class="site-header">
+  <nav class="nav">
+    <a href="/" class="nav__logo">Himanshu Sah</a>
+    <div class="nav__right">
+      <button class="theme-toggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="nav__toggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="nav__links">
+        <li><a href="/" class="active">Home</a></li>
+        <li><a href="/blog/" >Blog</a></li>
+      </ul>
+    </div>
+  </nav>
+</header>
+
+  <main class="page-content">
+    <section class="hero">
+  <div class="container">
+    <h1 class="hero__title">Himanshu Sah</h1>
+    <p class="hero__subtitle">Software Engineer building high-performance distributed systems and scalable backend platforms.</p>
+    <div class="hero__actions">
+      <a href="/assets/Himanshu_Sah_Resume.pdf" class="btn btn--primary" download>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+        Resume
+      </a>
+    </div>
+    <ul class="hero__social">
+      <li><a href="https://github.com/sunkoshi" target="_blank">GitHub</a></li>
+      <li><a href="https://linkedin.com/in/himanshu-orted" target="_blank">LinkedIn</a></li>
+      <li><a href="mailto:h.s9812258178@gmail.com">Email</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="container">
+  <div class="resume-section">
+    <h2 class="resume-section__title">Experience</h2>
+
+    <div class="resume-item">
+      <div class="resume-item__header">
+        <span class="resume-item__title">Application Developer (Software Engineer)</span>
+        <span class="resume-item__date">Aug 2023 &ndash; Present</span>
+      </div>
+      <p class="resume-item__subtitle">Amazon Web Services</p>
+      <div class="resume-item__description">
+        <ul>
+          <li>Architected a production-grade AI platform with <strong>multi-agent architecture</strong>, OpenSearch vector store, and Claude Sonnet for semantic retrieval and action planning over 100k+ documents — accelerating project action plan generation from hours to <strong>&lt;5 seconds</strong></li>
+          <li>Engineered a distributed PR analysis system with <strong>7 microservices</strong> (Python, TypeScript), SQS async queues, and pluggable SCM integrations; modeled codebases as graphs to detect downstream impacts and enforce code patterns — <strong>40% fewer regressions</strong>, ~200 review hours saved quarterly</li>
+          <li>Designed a multi-tenant MCP Gateway for secure onboarding of REST, JDBC, and Lambda tools with token-based isolation, normalized DB schemas, and fine-grained access controls — <strong>60% less operational overhead</strong>, eliminated per-tenant deployments</li>
+          <li>Built an automated vector DB migration and provisioning framework with schema inference, pluggable adapters, and standardized interfaces for OpenSearch/PostgreSQL — onboarding reduced from <strong>days to hours</strong>, manual effort cut by 80%</li>
+          <li>Modernized mission-critical financial systems by migrating ~6.5M lines of legacy code to Java Spring Boot/Angular, optimizing batch workflows and backend reliability to hit strict SLAs — <strong>90% TCO reduction</strong>, mainframe decommissioned</li>
+          <li>Developed an IAM policy management portal for centralized governance of policy and role assignments across AWS accounts, enabling create/audit/deploy workflows with simulation and drift detection</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="resume-item">
+      <div class="resume-item__header">
+        <span class="resume-item__title">Software Developer</span>
+        <span class="resume-item__date">Mar 2023 &ndash; Jul 2023</span>
+      </div>
+      <p class="resume-item__subtitle">Mable.AI</p>
+      <div class="resume-item__description">
+        <ul>
+          <li>Led development of core services and REST APIs for event collection, processing, and delivery using <strong>Node.js, Go, Python</strong>, and PostgreSQL; handled high-throughput data ingestion pipelines</li>
+          <li>Deployed applications across multiple environments including production on <strong>Kubernetes</strong> using Helm charts and Kustomize templates; managed CI/CD workflows for reliable releases</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="resume-section">
+    <h2 class="resume-section__title">Education</h2>
+
+    <div class="resume-item">
+      <div class="resume-item__header">
+        <span class="resume-item__title">B.Tech in Computer Science & Engineering</span>
+        <span class="resume-item__date">2019 &ndash; 2023</span>
+      </div>
+      <p class="resume-item__subtitle">National Institute of Technology, Warangal, India</p>
+    </div>
+  </div>
+
+  <div class="resume-section">
+    <h2 class="resume-section__title">Skills</h2>
+
+    <div class="skills-grid">
+      <div class="skill-category">
+        <p class="skill-category__title">Languages</p>
+        <p class="skill-category__items">Java, Go, Python, JavaScript, TypeScript, SQL, Shell</p>
+      </div>
+      <div class="skill-category">
+        <p class="skill-category__title">Backend & Platform</p>
+        <p class="skill-category__items">Distributed Systems, Microservices, REST APIs, Spring Boot, Node.js, PostgreSQL, Redis, Kafka, OpenSearch</p>
+      </div>
+      <div class="skill-category">
+        <p class="skill-category__title">Generative AI</p>
+        <p class="skill-category__items">Agentic AI, Multi-Agent Architectures, RAG, Vector Databases, MCP, Prompt Engineering</p>
+      </div>
+      <div class="skill-category">
+        <p class="skill-category__title">Cloud & Platform</p>
+        <p class="skill-category__items">AWS, Docker, Kubernetes, Serverless, CI/CD, IaC</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+  </main>
+  <footer class="site-footer">
+  <ul class="footer__social">
+    <li><a href="https://github.com/sunkoshi" target="_blank">GitHub</a></li>
+    <li><a href="https://linkedin.com/in/himanshu-orted" target="_blank">LinkedIn</a></li>
+    <li><a href="mailto:h.s9812258178@gmail.com">Email</a></li>
+  </ul>
+  <p>&copy; 2026 Himanshu Sah. All rights reserved.</p>
+</footer>
+
+  <script src="/assets/js/main.js"></script>
+</body>
+</html>

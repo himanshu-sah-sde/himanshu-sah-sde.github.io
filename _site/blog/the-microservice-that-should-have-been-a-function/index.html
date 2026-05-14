@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Microservice That Should Have Been a Function | Himanshu Sah</title>
+<meta name="description" content="Software Engineer building high-performance distributed systems and scalable backend platforms.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/main.css">
+
+</head>
+<body>
+  <header class="site-header">
+  <nav class="nav">
+    <a href="/" class="nav__logo">Himanshu Sah</a>
+    <div class="nav__right">
+      <button class="theme-toggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="nav__toggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="nav__links">
+        <li><a href="/" >Home</a></li>
+        <li><a href="/blog/" class="active">Blog</a></li>
+      </ul>
+    </div>
+  </nav>
+</header>
+
+  <main class="page-content">
+    <article class="container">
+  <header class="post-header">
+    <p class="post-header__date">April 20, 2025</p>
+    <h1 class="post-header__title">The Microservice That Should Have Been a Function</h1>
+    
+    <div class="post-card__tags">
+      
+      <span class="tag">engineering</span>
+      
+      <span class="tag">microservices</span>
+      
+      <span class="tag">architecture</span>
+      
+    </div>
+    
+  </header>
+  <div class="post-content">
+    <p>I once spent two weeks building a microservice that should have been a 40-line function.</p>
+
+<p>It had its own repo, its own CI pipeline, its own CloudFormation stack, its own on-call rotation. It accepted a payload, did some string manipulation, and returned a result. That’s it. Forty lines of logic wrapped in thousands of lines of infrastructure.</p>
+
+<p>I’m not writing this to be self-deprecating. I’m writing this because I see this pattern everywhere, and nobody talks about the real reason it happens: <strong>we reach for the architecture we’re comfortable with, not the one the problem needs.</strong></p>
+
+<h2 id="the-context">The Context</h2>
+
+<p>The team was building a distributed PR analysis system — something that could look at code changes across repositories, detect downstream impacts, and suggest fixes. We already had six services handling things like SCM integration, queue management, graph modeling, and result aggregation.</p>
+
+<p>The seventh service seemed like a natural extension. Its job was to parse commit messages and extract metadata — things like ticket references, semantic versioning bumps, and change categories. In isolation, it sounded like a reasonable microservice. It had a clear input, a clear output, and a distinct “responsibility.”</p>
+
+<p>So we gave it the full treatment. A new repo. A CDK stack for its Lambda. An SQS queue feeding into it. CloudWatch dashboards. Alarms. A runbook page on the wiki. The works.</p>
+
+<h2 id="the-moment-i-realized-the-mistake">The Moment I Realized The Mistake</h2>
+
+<p>About a month after shipping, I was debugging a latency issue in the analysis pipeline. A user’s PR was taking 8 seconds to process, which was way outside our SLA. I traced the request through our services, watching it hop from one to the next.</p>
+
+<p>When it hit service number seven — the commit message parser — it added 200ms just from the cold start. The actual parsing took 3ms. The rest was network overhead, serialization, deserialization, and Lambda initialization.</p>
+
+<p>I sat there looking at the trace and thought: if this were a function call inside service six, it would take 3ms total. Not 200ms. Not a network hop. Not a separate deployment. Three milliseconds.</p>
+
+<p>Then I looked at who called this service. One caller. Service six. Always synchronously. Always waiting for the response before proceeding.</p>
+
+<p>Then I looked at the scaling characteristics. It received exactly as many messages as service six sent. No independent scaling needs. No burst patterns that differed from its caller.</p>
+
+<p>Then I looked at its data. It had no database. No state. No storage. It was purely computational.</p>
+
+<p>It was a function. We’d just put it on a server for no reason.</p>
+
+<h2 id="why-this-happens">Why This Happens</h2>
+
+<p>I’ve thought about this a lot since then, and I think there are three forces that push teams toward over-extraction:</p>
+
+<p><strong>The “single responsibility” misunderstanding.</strong> People read about the Single Responsibility Principle and interpret it as “every distinct operation should be its own service.” But SRP is about cohesion within a module, not about network boundaries. A function inside a service can have a single responsibility without being a separate deployment unit.</p>
+
+<p><strong>Resume-driven architecture.</strong> This one’s uncomfortable to admit. But building a new service feels more impressive than writing a utility function. It’s a bigger PR, a more interesting architecture diagram, a better story in a design review. We optimize for how our decisions look, not how they perform.</p>
+
+<p><strong>The sunk cost of tooling.</strong> Once you have a service template that spins up a new repo with CI/CD, monitoring, and infrastructure — it feels effortless to create another service. The marginal cost seems low. But the marginal cost of a new service is never just the setup. It’s the ongoing maintenance, the deployment coordination, the cognitive overhead of another moving part in your system.</p>
+
+<h2 id="the-actual-cost-measured-not-theoretical">The Actual Cost (Measured, Not Theoretical)</h2>
+
+<p>After I realized the problem, I spent a week tracking the real cost of this unnecessary service:</p>
+
+<p><strong>Latency:</strong> 200ms added to every request. At 50k PRs analyzed per month, that’s 2.7 hours of cumulative user-facing latency that didn’t need to exist.</p>
+
+<p><strong>Deployment coupling:</strong> We couldn’t ship changes to the calling service without first verifying that the parser service was healthy and compatible. This added about 15 minutes to every deployment, twice a week. That’s 26 hours per year of engineer time spent waiting.</p>
+
+<p><strong>Debugging overhead:</strong> When something went wrong in the pipeline, engineers had to check logs across two services instead of one. The context switch between CloudWatch log groups, the correlation of request IDs across service boundaries — it added 10-15 minutes to every investigation.</p>
+
+<p><strong>On-call burden:</strong> Someone had to understand this service. When it alarmed at 2am (usually because of a Lambda cold start spike that was completely benign), someone had to wake up, look at it, and decide it was fine. We had three false-positive pages in two months.</p>
+
+<p><strong>Infrastructure cost:</strong> The Lambda, the SQS queue, the CloudWatch dashboards, the alarms — roughly $40/month. Not much individually, but multiply by all the services that shouldn’t exist across an organization.</p>
+
+<p>Combined: roughly 3-4 engineer-days per quarter. For string parsing.</p>
+
+<h2 id="the-fix">The Fix</h2>
+
+<p>I moved the parsing logic into a module within service six. It took half a day. The module is 52 lines of code (slightly more than my original estimate because I added better error handling). It’s tested with unit tests in the same repo. It deploys with the service it belongs to.</p>
+
+<p>Latency for that operation went from 200ms to 3ms. Debugging now happens in one log group. Deployments are simpler. On-call no longer gets paged for cold start spikes on a service that doesn’t exist.</p>
+
+<h2 id="the-heuristic-i-use-now">The Heuristic I Use Now</h2>
+
+<p>Before creating a new service, I ask five questions:</p>
+
+<ol>
+  <li>
+    <p><strong>Does it need to scale independently?</strong> Not “could it theoretically need to someday” — does it actually need to today, based on real traffic patterns?</p>
+  </li>
+  <li>
+    <p><strong>Does it have its own data?</strong> If it doesn’t own a data store — if it’s purely computational or passes through data — it’s probably not a service.</p>
+  </li>
+  <li>
+    <p><strong>Would a different team ever own this?</strong> If the same three people maintain both the caller and the callee, the service boundary is organizational theater.</p>
+  </li>
+  <li>
+    <p><strong>Does it have multiple callers?</strong> If only one service ever calls it, you don’t have a service — you have a remote function call with extra steps.</p>
+  </li>
+  <li>
+    <p><strong>Does it need independent deployability?</strong> If it always changes in lockstep with its caller, separate deployments are overhead, not flexibility.</p>
+  </li>
+</ol>
+
+<p>If you can’t answer “yes” to at least two of these, it should probably be a module, a library, or just a function in an existing service.</p>
+
+<h2 id="the-broader-pattern">The Broader Pattern</h2>
+
+<p>This isn’t just about microservices. It’s about a tendency in software engineering to introduce abstraction before we have evidence that the abstraction is needed.</p>
+
+<p>I see it with libraries extracted too early (“we might reuse this!”). With databases split prematurely (“this table might need to scale differently!”). With event buses introduced for communication between two components that could just call each other.</p>
+
+<p>Every architectural boundary has a cost. Network boundaries have latency, serialization overhead, and failure modes. Module boundaries have indirection and cognitive overhead. Even function boundaries have stack frame cost and naming burden.</p>
+
+<p>The question isn’t whether a boundary is “clean.” It’s whether the cost of the boundary is justified by a real, current need.</p>
+
+<h2 id="what-i-tell-junior-engineers">What I Tell Junior Engineers</h2>
+
+<p>When someone on my team proposes a new service, I don’t say no. I ask: “What would it look like if this were a module inside the existing service?” Usually, it looks simpler. Sometimes the conversation reveals that yes, there’s a genuine reason for the boundary — different scaling needs, different ownership, independent data. Great. Build the service.</p>
+
+<p>But often, the honest answer is: “It would be a function. And that would be fine.”</p>
+
+<p>The best architecture isn’t the one with the most boxes on the diagram. It’s the one where every box earns its place.</p>
+
+  </div>
+  <nav class="post-nav">
+    <a href="/blog/">&larr; Back to all posts</a>
+  </nav>
+</article>
+
+  </main>
+  <footer class="site-footer">
+  <ul class="footer__social">
+    <li><a href="https://github.com/sunkoshi" target="_blank">GitHub</a></li>
+    <li><a href="https://linkedin.com/in/himanshu-orted" target="_blank">LinkedIn</a></li>
+    <li><a href="mailto:h.s9812258178@gmail.com">Email</a></li>
+  </ul>
+  <p>&copy; 2026 Himanshu Sah. All rights reserved.</p>
+</footer>
+
+  <script src="/assets/js/main.js"></script>
+</body>
+</html>

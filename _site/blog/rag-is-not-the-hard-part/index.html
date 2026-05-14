@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG Is Not the Hard Part | Himanshu Sah</title>
+<meta name="description" content="Software Engineer building high-performance distributed systems and scalable backend platforms.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/main.css">
+
+</head>
+<body>
+  <header class="site-header">
+  <nav class="nav">
+    <a href="/" class="nav__logo">Himanshu Sah</a>
+    <div class="nav__right">
+      <button class="theme-toggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="nav__toggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="nav__links">
+        <li><a href="/" >Home</a></li>
+        <li><a href="/blog/" class="active">Blog</a></li>
+      </ul>
+    </div>
+  </nav>
+</header>
+
+  <main class="page-content">
+    <article class="container">
+  <header class="post-header">
+    <p class="post-header__date">May 02, 2025</p>
+    <h1 class="post-header__title">RAG Is Not the Hard Part</h1>
+    
+    <div class="post-card__tags">
+      
+      <span class="tag">ai</span>
+      
+      <span class="tag">rag</span>
+      
+      <span class="tag">engineering</span>
+      
+    </div>
+    
+  </header>
+  <div class="post-content">
+    <p>Everyone building AI products right now is talking about RAG — Retrieval Augmented Generation. The pitch is simple: chunk your documents, embed them, store them in a vector database, retrieve the relevant ones at query time, and feed them to an LLM. Suddenly your model “knows” your private data.</p>
+
+<p>I’ve built a RAG system that works over 100k+ documents in production. The retrieval pipeline — the part everyone blogs about — took about two weeks to get working. The other six months were spent on everything else.</p>
+
+<p>The retrieval pipeline is not the hard part. I want to talk about what is.</p>
+
+<h2 id="chunking-is-a-knowledge-modeling-problem">Chunking Is a Knowledge Modeling Problem</h2>
+
+<p>Every RAG tutorial starts with chunking. “Split your documents into 512 tokens with 50-token overlap.” This advice works for a demo with ten blog posts. It breaks down immediately on real documents.</p>
+
+<p>Here’s what real documents look like:</p>
+
+<p><strong>Financial compliance documents</strong> have sections that reference other sections. Section 4.2 says “subject to the constraints in Section 3.1.” If your chunk contains 4.2 but not 3.1, the model gives incomplete answers. If you chunk them separately, the retriever might find 4.2 but not 3.1, because the user’s query matches the language in 4.2.</p>
+
+<p><strong>Codebases</strong> have files that only make sense alongside their imports. A utility function means nothing without the context of where it’s called. A configuration file means nothing without knowing what it configures.</p>
+
+<p><strong>Internal wikis</strong> have pages that contradict each other because someone wrote a new process document but forgot to archive the old one. Both get chunked. Both get embedded. Both get retrieved. The model confidently synthesizes contradictory information into a coherent-sounding but wrong answer.</p>
+
+<p><strong>Long technical documents</strong> have hierarchical structure. A chapter has sections, sections have subsections. A chunk from a subsection might perfectly match the query embedding, but without the parent section’s context, it’s meaningless or misleading.</p>
+
+<h3 id="what-actually-worked-for-us">What Actually Worked For Us</h3>
+
+<p>We stopped treating documents as flat text. Instead, we model them as graphs.</p>
+
+<p>Each chunk has metadata: what document it belongs to, what section, what subsection, when it was last updated, what other chunks it references. Chunks can be parents of other chunks (a section summary is a parent of its detail paragraphs). Chunks can be newer versions of older chunks.</p>
+
+<p>When the retriever finds a relevant chunk, it doesn’t just return that chunk. It walks the graph. It pulls in the parent context. It checks if there’s a newer version. It includes referenced sections if they score above a threshold.</p>
+
+<p>This sounds complex, and it is. But it’s the difference between a system that works 70% of the time and one that works 92% of the time. That gap matters enormously in production, because users remember the failures, not the successes.</p>
+
+<h3 id="the-embedding-model-trap">The Embedding Model Trap</h3>
+
+<p>Teams spend weeks evaluating embedding models. “Should we use OpenAI’s ada-002? Cohere’s embed-v3? A fine-tuned model?” This matters, but less than you think.</p>
+
+<p>The embedding model determines how well your system understands semantic similarity. But most RAG failures aren’t semantic similarity failures. They’re context failures — the right chunk was retrieved, but it didn’t contain enough context to generate a correct answer. Or the wrong chunk was retrieved because the query was ambiguous, and better embeddings wouldn’t have helped.</p>
+
+<p>I’ve seen teams switch embedding models three times, seeing marginal improvements each time, while their chunking strategy — which determines 80% of retrieval quality — remains unchanged from the tutorial they followed on day one.</p>
+
+<h2 id="evaluation-is-where-projects-live-or-die">Evaluation Is Where Projects Live or Die</h2>
+
+<p>Here’s the lifecycle of most AI projects I’ve observed:</p>
+
+<ol>
+  <li>Build the RAG pipeline</li>
+  <li>Run a few queries manually</li>
+  <li>Get excited because it works</li>
+  <li>Ship it</li>
+  <li>Users find the 15% of queries where it fails badly</li>
+  <li>Trust drops to zero</li>
+  <li>Project gets shelved or enters an endless “improvement” phase with no clear metrics</li>
+</ol>
+
+<p>The gap between “works on my examples” and “works reliably” is enormous. And you can’t close that gap without rigorous evaluation.</p>
+
+<h3 id="what-evaluation-actually-looks-like">What Evaluation Actually Looks Like</h3>
+
+<p>We built an evaluation harness before we built most features. It has four components:</p>
+
+<p><strong>A real query dataset.</strong> Not queries we made up — queries from actual users, collected over time. Initially we seeded it with queries from stakeholders, but the most valuable queries are the ones real users ask that we didn’t anticipate. We add 10-20 new queries to the dataset every week.</p>
+
+<p><strong>Ground truth answers.</strong> For each query, a human-written answer that serves as the gold standard. This is expensive to create — each answer takes 5-15 minutes of expert time. But it’s the only way to measure quality objectively. We have about 300 ground truth pairs now. It took months to build this dataset. It’s our most valuable asset.</p>
+
+<p><strong>Automated scoring.</strong> We use a combination of metrics: answer relevance (does the response address the query?), faithfulness (is the response supported by the retrieved documents?), and completeness (does the response cover all aspects of the ground truth?). We score these automatically using an LLM-as-judge approach, calibrated against human ratings.</p>
+
+<p><strong>Regression detection.</strong> Every change to the pipeline — new chunking strategy, new embedding model, prompt tweak, retrieval parameter change — triggers a full evaluation run against the dataset. If quality drops on any category of query, the change doesn’t ship. This has caught subtle regressions multiple times, like a chunking change that improved performance on short queries but degraded long, multi-part questions.</p>
+
+<h3 id="the-insight-that-changed-our-approach">The Insight That Changed Our Approach</h3>
+
+<p>The most useful thing about our evaluation harness isn’t the scores. It’s the failure analysis.</p>
+
+<p>When a query fails, we can trace back exactly why. Was the right document retrieved but the wrong chunk selected? Was the right chunk selected but insufficient context included? Was the model’s generation unfaithful to the retrieved context? Each failure mode has a different fix.</p>
+
+<p>We maintain a taxonomy of failure modes and track their frequency over time. This tells us where to invest engineering effort. Right now, our top failure mode is “correct chunk retrieved but missing cross-reference context” — which is why we invested heavily in the graph-based retrieval approach.</p>
+
+<h2 id="the-freshness-problem">The Freshness Problem</h2>
+
+<p>Documents change. This sounds obvious, but the implications for RAG systems are brutal.</p>
+
+<p>People assume vector databases are like regular databases — you update the source, the index reflects it. They don’t. Your vector database is a snapshot. If a policy document gets updated and you don’t re-process it, your AI is confidently answering with outdated information. Users lose trust fast when they know something changed last week but the AI still gives the old answer.</p>
+
+<h3 id="what-a-real-ingestion-pipeline-looks-like">What A Real Ingestion Pipeline Looks Like</h3>
+
+<p>Ours watches for document changes through multiple channels: file system events, API polling, webhook integrations. When a change is detected:</p>
+
+<ol>
+  <li>
+    <p><strong>Diff detection:</strong> We don’t re-process the entire document. We identify which sections changed, which were added, which were deleted.</p>
+  </li>
+  <li>
+    <p><strong>Selective re-chunking:</strong> Only affected sections get re-chunked. This matters for performance — re-processing 100k documents on every change would be prohibitively expensive.</p>
+  </li>
+  <li>
+    <p><strong>Re-embedding:</strong> Changed chunks get new embeddings. Old embeddings for deleted or modified chunks get removed from the index.</p>
+  </li>
+  <li>
+    <p><strong>Graph update:</strong> The document graph gets updated. If a new section references an existing one, that relationship gets added. If a section was deleted, dependent chunks get flagged for review.</p>
+  </li>
+  <li>
+    <p><strong>Staleness scoring:</strong> Chunks get a freshness score based on when their source was last verified. If a chunk hasn’t been verified in 30 days, it gets a lower retrieval priority. This prevents the system from confidently serving information from documents that might be outdated.</p>
+  </li>
+  <li>
+    <p><strong>Consistency check:</strong> After ingestion, we run a subset of our evaluation queries that relate to the changed documents, verifying that answers are now correct and consistent.</p>
+  </li>
+</ol>
+
+<p>This pipeline is boring infrastructure work. Nobody writes blog posts about it. It’s not as exciting as prompt engineering or model evaluation. But it’s the difference between a demo and a product that people trust.</p>
+
+<h2 id="token-optimization-is-an-ongoing-battle">Token Optimization Is An Ongoing Battle</h2>
+
+<p>Context windows are large now, but they’re not infinite. And even when they’re large, stuffing them full of retrieved documents isn’t free — it increases latency, increases cost, and paradoxically can decrease quality (the model gets lost in too much context).</p>
+
+<p>We spent significant time on token optimization:</p>
+
+<p><strong>Compression:</strong> Before feeding retrieved chunks to the model, we summarize them if they’re longer than a threshold. The summary retains key facts but uses fewer tokens.</p>
+
+<p><strong>Relevance filtering:</strong> Just because a chunk was retrieved doesn’t mean it should be included. We apply a secondary relevance filter after retrieval, dropping chunks that scored below a dynamic threshold. Better to give the model four highly relevant chunks than twelve marginally relevant ones.</p>
+
+<p><strong>Dynamic context allocation:</strong> Different queries need different amounts of context. A factual question (“what’s the retention policy for X?”) needs one or two chunks. A synthesis question (“how does our approach to X compare to our approach to Y?”) might need ten. We estimate query complexity and allocate context budget accordingly.</p>
+
+<h2 id="what-id-tell-someone-starting-today">What I’d Tell Someone Starting Today</h2>
+
+<p>Stop optimizing your embedding model first. Start with your chunking strategy — that’s where 80% of quality lives.</p>
+
+<p>Build evaluation before you build features. You can’t improve what you can’t measure, and intuition about AI quality is notoriously unreliable.</p>
+
+<p>Plan for staleness from day one. If you don’t have a freshness strategy, you’ll discover you need one the hard way — through user complaints.</p>
+
+<p>Accept that RAG is not an AI problem. It’s a data engineering problem with an AI component. The teams that treat it this way ship reliable systems. The teams that focus on prompts and models ship impressive demos that don’t survive contact with real users.</p>
+
+<p>The LLM is the easy part. It’s everything else that takes the time.</p>
+
+  </div>
+  <nav class="post-nav">
+    <a href="/blog/">&larr; Back to all posts</a>
+  </nav>
+</article>
+
+  </main>
+  <footer class="site-footer">
+  <ul class="footer__social">
+    <li><a href="https://github.com/sunkoshi" target="_blank">GitHub</a></li>
+    <li><a href="https://linkedin.com/in/himanshu-orted" target="_blank">LinkedIn</a></li>
+    <li><a href="mailto:h.s9812258178@gmail.com">Email</a></li>
+  </ul>
+  <p>&copy; 2026 Himanshu Sah. All rights reserved.</p>
+</footer>
+
+  <script src="/assets/js/main.js"></script>
+</body>
+</html>

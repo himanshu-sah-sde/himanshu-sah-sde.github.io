@@ -1,0 +1,23 @@
+---
+layout: default
+---
+
+<article class="container">
+  <header class="post-header">
+    <p class="post-header__date">{{ page.date | date: "%B %d, %Y" }}</p>
+    <h1 class="post-header__title">{{ page.title }}</h1>
+    {% if page.tags %}
+    <div class="post-card__tags">
+      {% for tag in page.tags %}
+      <span class="tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </header>
+  <div class="post-content">
+    {{ content }}
+  </div>
+  <nav class="post-nav">
+    <a href="{{ '/blog/' | relative_url }}">&larr; Back to all posts</a>
+  </nav>
+</article>
